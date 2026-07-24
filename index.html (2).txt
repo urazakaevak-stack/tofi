@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apollo Hub — Сага о Винланде</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet" />
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: #0a0010;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* ===== ФОН С ТОРФИНОМ (несколько вариантов) ===== */
+        .bg-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            background: #0a0010;
+        }
+
+        .bg-container video,
+        .bg-container img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 100%;
+            min-height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .bg-container .active {
+            opacity: 1;
+        }
+
+        #bgOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: rgba(10, 0, 16, 0.65);
+            pointer-events: none;
+        }
+
+        /* Если GIF не загрузился — показываем градиент */
+        .bg-fallback {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0010, #1a0a2e, #0a0010);
+            z-index: -1;
+        }
+
+        /* ===== ЭКРАН ЗАГРУЗКИ ===== */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0010;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+        #loader.hidden { opacity: 0; visibility: hidden; }
+
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            position: relative;
+        }
+
+        .loader-logo {
+            font-family: 'Cinzel', serif;
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #7c3aed, #3b82f6, #7c3aed);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 2s ease-in-out infinite, pulseGlow 1.5s ease-in-out infinite;
+            letter-spacing: 5px;
+            position: relative;
+        }
+
+        .loader-logo .sub {
+            font-size: 1rem;
+            -webkit-text-fill-color: rgba(139, 92, 246, 0.5);
+            letter-spacing: 8px;
+            display: block;
+            margin-top: 5px;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(124, 58, 237, 0.2)); }
+            50% { filter: drop-shadow(0 0 60px rgba(124, 58, 237, 0.5)); }
+        }
+
+        .loader-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .loader-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: radial-gradient(circle, #7c3aed, #3b82f6);
+            border-radius: 50%;
+            animation: floatUp linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(100px) scale(0); opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateY(-100px) scale(1); opacity: 0; }
+        }
+
+        .loader-progress-container {
+            width: 300px;
+            max-width: 80%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .loader-progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(124, 58, 237, 0.15);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(124, 58, 237, 0.2);
+        }
+
+        .loader-progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #7c3aed, #3b82f6, #7c3aed);
+            background-size: 200% 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            animation: shimmer 1.5s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .loader-progress-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: #7c3aed;
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+        }
+
+        .loader-message {
+            font-size: 1rem;
+            color: #666;
+            letter-spacing: 4px;
+            opacity: 0;
+            animation: fadeInMessage 1s ease 2.5s forwards;
+        }
+
+        @keyframes fadeInMessage {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .loader-message .dots { display: inline-block; animation: dots 1.5s steps(4, end) infinite; }
+        @keyframes dots {
+            0% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
+        }
+
+        /* ===== ОСНОВНОЙ САЙТ ===== */
+        #main-site {
+            position: relative;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+        #main-site.visible { opacity: 1; }
+
+        /* ===== НАВИГАЦИЯ ===== */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            background: rgba(10, 0, 16, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid rgba(124, 58, 237, 0.2);
+        }
+
+        .logo {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #7c3aed, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 3px;
+        }
+        .logo span { color: #fff; -webkit-text-fill-color: #fff; }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #ccc;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+            position: relative;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #7c3aed;
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover { color: #7c3aed; }
+        .nav-links a:hover::after { width: 100%; }
+
+        .nav-order-btn {
+            display: inline-block;
+            padding: 8px 25px;
+            background: linear-gradient(135deg, #7c3aed, #3b82f6);
+            color: #fff !important;
+            border-radius: 50px;
+            font-weight: 700 !important;
+            font-size: 0.85rem !important;
+            transition: all 0.3s !important;
+            border: 1px solid #7c3aed;
+            cursor: pointer;
+            text-decoration: none !important;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-order-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(124, 58, 237, 0.3);
+        }
+        .nav-order-btn::after { display: none !important; }
+
+        .orders-toggle {
+            background: rgba(124, 58, 237, 0.15);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            color: #7c3aed;
+            padding: 8px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .orders-toggle:hover {
+            background: rgba(124, 58, 237, 0.25);
+            border-color: #7c3aed;
+        }
+
+        .orders-toggle .badge-count {
+            background: #7c3aed;
+            color: #fff;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 50px;
+        }
+
+        /* ===== ПАНЕЛЬ ЗАКАЗОВ ===== */
+        .orders-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .orders-panel.active { display: flex; }
+
+        .orders-panel-content {
+            background: rgba(20, 0, 30, 0.95);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 25px;
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .orders-panel-content::-webkit-scrollbar { width: 4px; }
+        .orders-panel-content::-webkit-scrollbar-track { background: rgba(124, 58, 237, 0.05); border-radius: 10px; }
+        .orders-panel-content::-webkit-scrollbar-thumb { background: #7c3aed; border-radius: 10px; }
+
+        .orders-panel-content .close-panel {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .orders-panel-content .close-panel:hover { color: #fff; }
+
+        .orders-panel-content h2 {
+            font-family: 'Cinzel', serif;
+            color: #7c3aed;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .orders-panel-content .order-item {
+            background: rgba(124, 58, 237, 0.05);
+            border: 1px solid rgba(124, 58, 237, 0.1);
+            border-radius: 12px;
+            padding: 15px 18px;
+            margin-bottom: 12px;
+        }
+
+        .orders-panel-content .order-item .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .orders-panel-content .order-item .order-style {
+            color: #7c3aed;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .orders-panel-content .order-item .order-date {
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .orders-panel-content .order-item .order-details {
+            color: #aaa;
+            font-size: 0.95rem;
+        }
+
+        .orders-panel-content .order-item .order-details strong { color: #fff; }
+        .orders-panel-content .empty-orders {
+            color: #666;
+            text-align: center;
+            padding: 30px 0;
+            font-size: 1.1rem;
+        }
+
+        /* ===== ГЛАВНЫЙ ЭКРАН ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 20px 60px;
+            position: relative;
+        }
+
+        .hero-content {
+            animation: fadeInUp 1.5s ease;
+            background: rgba(10, 0, 16, 0.55);
+            padding: 50px 60px;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(124, 58, 237, 0.15);
+            max-width: 800px;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(60px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero .torfin-icon {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 20px;
+            color: #7c3aed;
+            filter: drop-shadow(0 0 30px rgba(124, 58, 237, 0.2));
+        }
+
+        .hero h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 4.5rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #7c3aed, #3b82f6, #7c3aed);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 3s ease-in-out infinite;
+        }
+
+        .hero .subtitle {
+            font-size: 1.4rem;
+            font-weight: 300;
+            color: #aaa;
+            margin-bottom: 10px;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        .hero .tagline {
+            font-size: 1.1rem;
+            color: #888;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        .hero .badge {
+            display: inline-block;
+            padding: 8px 25px;
+            margin: 5px;
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #7c3aed;
+            background: rgba(124, 58, 237, 0.05);
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .hero .badge:hover {
+            background: rgba(124, 58, 237, 0.15);
+            transform: scale(1.05);
+        }
+
+        .btn-primary {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 18px 50px;
+            background: linear-gradient(135deg, #7c3aed, #3b82f6);
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.4s;
+            box-shadow: 0 0 40px rgba(124, 58, 237, 0.2);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.08) translateY(-3px);
+            box-shadow: 0 0 60px rgba(124, 58, 237, 0.4);
+        }
+
+        /* ===== СЕКЦИЯ УСЛУГ ===== */
+        .section {
+            padding: 80px 50px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-family: 'Cinzel', serif;
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #7c3aed, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .section-title .white { color: #fff; -webkit-text-fill-color: #fff; }
+        .section-sub {
+            text-align: center;
+            color: #888;
+            font-size: 1.2rem;
+            margin-bottom: 50px;
+            font-style: italic;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .service-card {
+            background: rgba(20, 0, 30, 0.8);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            border: 1px solid rgba(124, 58, 237, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(124, 58, 237, 0.05), transparent, rgba(59, 130, 246, 0.05), transparent);
+            animation: spinGlow 10s linear infinite;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .service-card:hover::before { opacity: 1; }
+
+        @keyframes spinGlow {
+            100% { transform: rotate(360deg); }
+        }
+
+        .service-card:hover {
+            transform: translateY(-15px) scale(1.02);
+            border-color: rgba(124, 58, 237, 0.3);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(124, 58, 237, 0.05);
+        }
+
+        .service-icon {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            display: block;
+            position: relative;
+            z-index: 1;
+        }
+
+        .service-card h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+            color: #7c3aed;
+            font-family: 'Cinzel', serif;
+        }
+
+        .service-card p {
+            color: #aaa;
+            font-size: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .service-card .price {
+            display: block;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 10px 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .service-card .price span {
+            font-size: 1rem;
+            color: #888;
+        }
+
+        .service-card .service-tag {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 5px 20px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(124, 58, 237, 0.1);
+            color: #7c3aed;
+            position: relative;
+            z-index: 1;
+            border: 1px solid rgba(124, 58, 237, 0.2);
+        }
+
+        .order-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 12px 35px;
+            background: linear-gradient(135deg, #7c3aed, #3b82f6);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            position: relative;
+            z-index: 1;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .order-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(124, 58, 237, 0.3);
+        }
+
+        /* ===== СПОСОБЫ ОПЛАТЫ ===== */
+        .payments-section {
+            padding: 40px 20px;
+            text-align: center;
+            background: rgba(20, 0, 30, 0.4);
+            border-top: 1px solid rgba(124, 58, 237, 0.1);
+            border-bottom: 1px solid rgba(124, 58, 237, 0.1);
+            margin: 0 20px;
+            border-radius: 20px;
+        }
+
+        .payments-section .pay-label {
+            font-size: 1rem;
+            color: #888;
+            margin-bottom: 15px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .payments-grid {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+
+        .pay-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            padding: 10px 18px;
+            background: rgba(124, 58, 237, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(124, 58, 237, 0.08);
+            transition: all 0.3s;
+            min-width: 70px;
+        }
+
+        .pay-item:hover {
+            background: rgba(124, 58, 237, 0.1);
+            border-color: rgba(124, 58, 237, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .pay-item i {
+            font-size: 1.8rem;
+            color: #7c3aed;
+        }
+
+        .pay-item .pay-name {
+            font-size: 0.6rem;
+            color: #888;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* ===== ФОРМА ЗАКАЗА ===== */
+        .order-section {
+            padding: 60px 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .order-form {
+            background: rgba(20, 0, 30, 0.7);
+            padding: 40px;
+            border-radius: 25px;
+            border: 1px solid rgba(124, 58, 237, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .order-form .form-group {
+            margin-bottom: 20px;
+        }
+
+        .order-form label {
+            display: block;
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .order-form select,
+        .order-form input,
+        .order-form textarea {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(124, 58, 237, 0.15);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        .order-form select option {
+            background: #1a0a20;
+            color: #fff;
+        }
+
+        .order-form select:focus,
+        .order-form input:focus,
+        .order-form textarea:focus {
+            outline: none;
+            border-color: #7c3aed;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.05);
+        }
+
+        .order-form textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* ===== HONEYPOT ===== */
+        .honeypot {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            opacity: 0;
+            pointer-events: none;
+            height: 0;
+            width: 0;
+        }
+
+        /* ===== CAPTCHA ===== */
+        .captcha-section {
+            margin: 15px 0 20px;
+            padding: 15px;
+            background: rgba(124, 58, 237, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(124, 58, 237, 0.1);
+            text-align: center;
+        }
+
+        .captcha-section .captcha-label {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .captcha-section .captcha-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .captcha-section .captcha-numbers {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: #7c3aed;
+            letter-spacing: 5px;
+            user-select: none;
+            min-width: 80px;
+        }
+
+        .captcha-section .captcha-equals {
+            color: #666;
+            font-size: 1.5rem;
+        }
+
+        .captcha-section .captcha-input {
+            width: 80px;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1.2rem;
+            text-align: center;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        .captcha-section .captcha-input:focus {
+            outline: none;
+            border-color: #7c3aed;
+        }
+
+        .captcha-section .captcha-refresh {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+            padding: 5px;
+        }
+
+        .captcha-section .captcha-refresh:hover {
+            color: #7c3aed;
+        }
+
+        .order-form .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #7c3aed, #3b82f6);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 5px;
+        }
+
+        .order-form .submit-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 40px rgba(124, 58, 237, 0.3);
+        }
+
+        .order-form .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* ===== ФУТЕР ===== */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 1px solid rgba(124, 58, 237, 0.1);
+            color: #555;
+            font-size: 0.9rem;
+            background: rgba(10, 0, 16, 0.8);
+        }
+
+        footer .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        footer .footer-links a {
+            color: #888;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        footer .footer-links a:hover {
+            color: #7c3aed;
+            transform: translateY(-3px);
+        }
+
+        footer .footer-links a .link-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .samurai-divider {
+            width: 80px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #7c3aed, transparent);
+            margin: 20px auto;
+        }
+
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease;
+        }
+        .animate-on-scroll.visible { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 768px) {
+            nav { padding: 15px 20px; flex-direction: column; gap: 10px; }
+            .nav-links { gap: 12px; flex-wrap: wrap; justify-content: center; }
+            .nav-links a { font-size: 0.85rem; }
+            .hero h1 { font-size: 2.8rem; }
+            .hero-content { padding: 30px 20px; }
+            .section { padding: 50px 20px; }
+            .section-title { font-size: 2.2rem; }
+            .payments-grid { gap: 12px; }
+            .pay-item { padding: 8px 12px; min-width: 55px; }
+            .pay-item i { font-size: 1.3rem; }
+            .order-form { padding: 25px; }
+            .loader-logo { font-size: 2.8rem; }
+            .loader-progress-container { width: 250px; }
+            .orders-panel-content { padding: 20px; max-width: 95%; }
+            .nav-order-btn { font-size: 0.7rem !important; padding: 6px 15px; }
+            .orders-toggle { font-size: 0.7rem; padding: 6px 12px; }
+            .captcha-section .captcha-numbers { font-size: 1.5rem; }
+            .captcha-section .captcha-input { width: 60px; padding: 8px 12px; font-size: 1rem; }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 2rem; }
+            .hero .subtitle { font-size: 1rem; }
+            .service-card h3 { font-size: 1.3rem; }
+            .service-card .price { font-size: 1.6rem; }
+            .loader-logo { font-size: 2rem; }
+            .loader-progress-container { width: 200px; }
+            .loader-progress-text { font-size: 0.9rem; }
+            .orders-panel-content h2 { font-size: 1.4rem; }
+            .orders-panel-content .order-item { padding: 12px; }
+            .nav-links a { font-size: 0.7rem; }
+            .nav-order-btn { font-size: 0.6rem !important; padding: 5px 12px; }
+            .orders-toggle { font-size: 0.6rem; padding: 5px 10px; }
+            .captcha-section .captcha-numbers { font-size: 1.2rem; min-width: 60px; }
+            .captcha-section .captcha-input { width: 50px; padding: 6px 10px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== ЭКРАН ЗАГРУЗКИ ===== -->
+    <div id="loader">
+        <div class="loader-container">
+            <div class="loader-particles" id="loaderParticles"></div>
+            <div class="loader-logo">
+                ⚔ APOLLO
+                <span class="sub">✦ HUB ✦</span>
+            </div>
+            <div class="loader-progress-container">
+                <div class="loader-progress-bar">
+                    <div class="loader-progress-fill" id="progressFill"></div>
+                </div>
+                <div class="loader-progress-text" id="progressText">0%</div>
+            </div>
+            <div class="loader-message">
+                Переправляем вас на сайт<span class="dots">...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ФОН С ТОРФИНОМ (несколько источников) ===== -->
+    <div class="bg-container">
+        <div class="bg-fallback"></div>
+        
+        <!-- Вариант 1: Tenor (самый надёжный) -->
+        <img class="active" src="https://c.tenor.com/2k1hZ4-y0w8AAAAC/vinland-saga-anime-thorfinn.gif" alt="Thorfinn 1" />
+        
+        <!-- Вариант 2: Резервный (если первый не загрузится) -->
+        <img src="https://i.pinimg.com/originals/8e/3f/3a/8e3f3a8e3f3a8e3f3a8e3f3a8e3f3a8e.gif" alt="Thorfinn 2" />
+        
+        <!-- Вариант 3: Ещё один резерв -->
+        <img src="https://media.tenor.com/2k1hZ4-y0w8AAAAd/vinland-saga-anime-thorfinn.gif" alt="Thorfinn 3" />
+    </div>
+    
+    <div id="bgOverlay"></div>
+
+    <!-- ===== ОСНОВНОЙ САЙТ ===== -->
+    <div id="main-site">
+        <nav>
+            <div class="logo">⚔ APOLLO <span>HUB</span></div>
+            <div class="nav-links">
+                <a href="#services">Услуги</a>
+                <button class="orders-toggle" onclick="toggleOrders()">
+                    <i class="fas fa-clipboard-list"></i> Заказы
+                    <span class="badge-count" id="ordersCount">0</span>
+                </button>
+                <a href="#order" class="nav-order-btn">⚔ Заказать</a>
+            </div>
+        </nav>
+
+        <!-- ===== ПАНЕЛЬ ЗАКАЗОВ ===== -->
+        <div class="orders-panel" id="ordersPanel">
+            <div class="orders-panel-content">
+                <button class="close-panel" onclick="toggleOrders()">✕</button>
+                <h2>📋 Мои заказы</h2>
+                <div id="ordersList">
+                    <div class="empty-orders">📭 Пока нет заказов</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ГЛАВНЫЙ ЭКРАН ===== -->
+        <section class="hero">
+            <div class="hero-content">
+                <span class="torfin-icon">⚔</span>
+                <div class="badge">✦ Путь воина ✦</div>
+                <h1>APOLLO HUB</h1>
+                <p class="subtitle">FLOW · KM · ANIME</p>
+                <p class="tagline">"Сага о Винланде — в каждом кадре"</p>
+                <div class="samurai-divider"></div>
+                <div style="margin: 20px 0;">
+                    <span class="badge">🌊 Flow Edit</span>
+                    <span class="badge">🎬 KM Edit</span>
+                    <span class="badge">🌸 Anime Edit</span>
+                </div>
+                <a href="#order" class="btn-primary">⚔ Заказать эдит</a>
+            </div>
+        </section>
+
+        <!-- ===== УСЛУГИ ===== -->
+        <section class="section" id="services">
+            <h2 class="section-title animate-on-scroll">Наши <span class="white">услуги</span></h2>
+            <div class="samurai-divider"></div>
+            <p class="section-sub animate-on-scroll">Выбери свой стиль</p>
+
+            <div class="services-grid">
+                <div class="service-card animate-on-scroll">
+                    <span class="service-icon">🌊</span>
+                    <h3>FLOW EDIT</h3>
+                    <p>Плавный, текучий стиль с мягкими переходами и атмосферой свободы.</p>
+                    <span class="service-tag">✦ Плавность & Лёгкость</span>
+                    <span class="price">150 <span>₽</span></span>
+                    <a href="#order" class="order-btn scroll-btn">⚔ Заказать</a>
+                </div>
+
+                <div class="service-card animate-on-scroll">
+                    <span class="service-icon">🎬</span>
+                    <h3>KM EDIT</h3>
+                    <p>Кинематографичный стиль с драматичным светом и глубоким цветокором.</p>
+                    <span class="service-tag">✦ Кинематограф</span>
+                    <span class="price">100 <span>₽</span></span>
+                    <a href="#order" class="order-btn scroll-btn">⚔ Заказать</a>
+                </div>
+
+                <div class="service-card animate-on-scroll">
+                    <span class="service-icon">🌸</span>
+                    <h3>ANIME EDIT</h3>
+                    <p>Яркие цвета, динамичный монтаж и вайб аниме-культуры.</p>
+                    <span class="service-tag">✦ Аниме-эстетика</span>
+                    <span class="price">75 <span>₽</span></span>
+                    <a href="#order" class="order-btn scroll-btn">⚔ Заказать</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== СПОСОБЫ ОПЛАТЫ ===== -->
+        <div class="payments-section animate-on-scroll">
+            <p class="pay-label">💎 Способы оплаты</p>
+            <div class="payments-grid">
+                <div class="pay-item"><i class="fab fa-bitcoin"></i><span class="pay-name">USDT</span></div>
+                <div class="pay-item"><i class="fab fa-telegram-plane"></i><span class="pay-name">TON</span></div>
+                <div class="pay-item"><i class="fas fa-ruble-sign"></i><span class="pay-name">RUB</span></div>
+                <div class="pay-item"><i class="fas fa-dollar-sign"></i><span class="pay-name">DOLLARS</span></div>
+                <div class="pay-item"><i class="fas fa-star" style="color: #ffd700;"></i><span class="pay-name">TG STARS</span></div>
+                <div class="pay-item"><i class="fas fa-gem" style="color: #ff6b6b;"></i><span class="pay-name">NFT</span></div>
+                <div class="pay-item"><i class="fas fa-gift" style="color: #ff6b6b;"></i><span class="pay-name">GIFTS</span></div>
+            </div>
+        </div>
+
+        <!-- ===== ФОРМА ЗАКАЗА ===== -->
+        <section class="order-section" id="order">
+            <h2 class="section-title animate-on-scroll">Оформить <span class="white">заказ</span></h2>
+            <div class="samurai-divider"></div>
+            <p class="section-sub animate-on-scroll">Заполни форму — и я свяжусь с тобой</p>
+
+            <div class="order-form animate-on-scroll">
+                <form id="orderForm">
+                    <!-- HONEYPOT -->
+                    <div class="honeypot">
+                        <label for="website">Оставьте пустым</label>
+                        <input type="text" id="website" name="website" autocomplete="off" tabindex="-1" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Выбери стиль</label>
+                        <select id="style" required>
+                            <option value="">— Выбери стиль —</option>
+                            <option value="FLOW EDIT">🌊 FLOW EDIT — 150 ₽</option>
+                            <option value="KM EDIT">🎬 KM EDIT — 100 ₽</option>
+                            <option value="ANIME EDIT">🌸 ANIME EDIT — 75 ₽</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Персонаж / Ворки</label>
+                        <input type="text" id="character" placeholder="Напиши персонажа или название ворка" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ваш Telegram</label>
+                        <input type="text" id="telegram" placeholder="@username" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Комментарий (опционально)</label>
+                        <textarea id="comment" placeholder="Дополнительные пожелания..."></textarea>
+                    </div>
+
+                    <!-- CAPTCHA -->
+                    <div class="captcha-section">
+                        <div class="captcha-label">🔒 Подтвердите, что вы не робот</div>
+                        <div class="captcha-row">
+                            <span class="captcha-numbers" id="captchaDisplay">12 + 8</span>
+                            <span class="captcha-equals">=</span>
+                            <input type="text" class="captcha-input" id="captchaInput" placeholder="?" maxlength="3" autocomplete="off" required />
+                            <button type="button" class="captcha-refresh" onclick="generateCaptcha()">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submitBtn">⚔ Отправить заказ</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ===== ФУТЕР ===== -->
+        <footer>
+            <p style="font-family: 'Cinzel', serif; font-size: 1.2rem; background: linear-gradient(135deg, #7c3aed, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">⚔ APOLLO HUB</p>
+            <p style="color: #888;">"Сага о Винланде — в каждом кадре"</p>
+
+            <div class="footer-links">
+                <a href="https://t.me/fuckapollo" target="_blank">
+                    <i class="fab fa-telegram"></i>
+                    <span class="link-label">@fuckapollo</span>
+                </a>
+                <a href="https://www.tiktok.com/@sourvoid08" target="_blank">
+                    <i class="fab fa-tiktok"></i>
+                    <span class="link-label">@sourvoid08</span>
+                </a>
+            </div>
+
+            <div class="samurai-divider"></div>
+            <p style="margin-top: 10px; color: #444; font-size: 0.8rem;">© 2026 Apollo Hub. Все права защищены.</p>
+        </footer>
+    </div>
+
+    <script>
+        // ===== ЗАГРУЗКА ФОНА (переключение если не загрузился) =====
+        document.addEventListener('DOMContentLoaded', function() {
+            const bgImages = document.querySelectorAll('.bg-container img');
+            let currentIndex = 0;
+            
+            // Функция переключения на следующий фон
+            function switchBackground() {
+                bgImages.forEach(img => img.classList.remove('active'));
+                currentIndex = (currentIndex + 1) % bgImages.length;
+                bgImages[currentIndex].classList.add('active');
+            }
+            
+            // Если первый не загрузился через 3 секунды — переключаем
+            setTimeout(() => {
+                const firstImg = bgImages[0];
+                if (firstImg && !firstImg.complete) {
+                    switchBackground();
+                }
+            }, 3000);
+            
+            // Если загрузился с ошибкой — переключаем
+            bgImages.forEach((img, index) => {
+                img.addEventListener('error', function() {
+                    if (index === currentIndex) {
+                        switchBackground();
+                    }
+                });
+            });
+        });
+
+        // ===== ЧАСТИЦЫ ЗАГРУЗКИ =====
+        (function createLoaderParticles() {
+            const container = document.getElementById('loaderParticles');
+            for (let i = 0; i < 25; i++) {
+                const p = document.createElement('div');
+                p.className = 'loader-particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.top = Math.random() * 100 + '%';
+                p.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                p.style.animationDelay = (Math.random() * 3) + 's';
+                p.style.width = (Math.random() * 6 + 2) + 'px';
+                p.style.height = p.style.width;
+                container.appendChild(p);
+            }
+        })();
+
+        // ===== ЗАГРУЗКА =====
+        let progress = 0;
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const loader = document.getElementById('loader');
+        const mainSite = document.getElementById('main-site');
+
+        function updateLoader() {
+            const interval = setInterval(() => {
+                const step = Math.floor(Math.random() * 6) + 2;
+                progress = Math.min(progress + step, 100);
+                progressFill.style.width = progress + '%';
+                progressText.textContent = progress + '%';
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        loader.classList.add('hidden');
+                        mainSite.classList.add('visible');
+                    }, 500);
+                }
+            }, 150);
+        }
+
+        setTimeout(updateLoader, 1000);
+
+        // ===== СИСТЕМА ЗАКАЗОВ =====
+        let orders = JSON.parse(localStorage.getItem('apolloHubOrders')) || [];
+
+        function saveOrders() {
+            localStorage.setItem('apolloHubOrders', JSON.stringify(orders));
+            updateOrdersBadge();
+        }
+
+        function updateOrdersBadge() {
+            const count = document.getElementById('ordersCount');
+            if (count) count.textContent = orders.length;
+        }
+
+        function renderOrders() {
+            const list = document.getElementById('ordersList');
+            if (!list) return;
+
+            if (orders.length === 0) {
+                list.innerHTML = '<div class="empty-orders">📭 Пока нет заказов</div>';
+                return;
+            }
+
+            list.innerHTML = orders.map((order, index) => `
+                <div class="order-item">
+                    <div class="order-header">
+                        <span class="order-style">${order.style}</span>
+                        <span class="order-date">${order.date}</span>
+                    </div>
+                    <div class="order-details">
+                        <strong>Персонаж:</strong> ${order.character}<br>
+                        <strong>Telegram:</strong> ${order.telegram}<br>
+                        ${order.comment ? `<strong>Комментарий:</strong> ${order.comment}` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleOrders() {
+            const panel = document.getElementById('ordersPanel');
+            if (panel) {
+                panel.classList.toggle('active');
+                if (panel.classList.contains('active')) {
+                    renderOrders();
+                }
+            }
+        }
+
+        // ===== CAPTCHA =====
+        let captchaAnswer = 0;
+
+        function generateCaptcha() {
+            const num1 = Math.floor(Math.random() * 15) + 1;
+            const num2 = Math.floor(Math.random() * 15) + 1;
+            const operators = ['+', '-'];
+            const op = operators[Math.floor(Math.random() * operators.length)];
+            
+            let display, answer;
+            
+            if (op === '+') {
+                display = `${num1} + ${num2}`;
+                answer = num1 + num2;
+            } else {
+                if (num1 >= num2) {
+                    display = `${num1} - ${num2}`;
+                    answer = num1 - num2;
+                } else {
+                    display = `${num2} - ${num1}`;
+                    answer = num2 - num1;
+                }
+            }
+            
+            document.getElementById('captchaDisplay').textContent = display;
+            captchaAnswer = answer;
+            document.getElementById('captchaInput').value = '';
+        }
+
+        generateCaptcha();
+
+        // ===== ФОРМА =====
+        let formSubmitted = false;
+        const submitBtn = document.getElementById('submitBtn');
+
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const honeypot = document.getElementById('website');
+            if (honeypot && honeypot.value !== '') {
+                alert('⚠️ Обнаружена подозрительная активность. Попробуйте позже.');
+                return;
+            }
+
+            const captchaInput = document.getElementById('captchaInput').value.trim();
+            if (parseInt(captchaInput) !== captchaAnswer) {
+                alert('❌ Неправильный ответ на капчу! Попробуйте ещё раз.');
+                generateCaptcha();
+                return;
+            }
+
+            if (formSubmitted) {
+                alert('⏳ Вы уже отправили заказ. Подождите 30 секунд!');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Отправка...';
+
+            const style = document.getElementById('style').value;
+            const character = document.getElementById('character').value;
+            const telegram = document.getElementById('telegram').value;
+            const comment = document.getElementById('comment').value;
+
+            if (!style || !character || !telegram) {
+                alert('⚠️ Пожалуйста, заполните все обязательные поля!');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '⚔ Отправить заказ';
+                return;
+            }
+
+            const now = new Date();
+            const dateStr = now.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            const order = {
+                style: style,
+                character: character,
+                telegram: telegram,
+                comment: comment || '—',
+                date: dateStr
+            };
+
+            orders.push(order);
+            saveOrders();
+            renderOrders();
+            updateOrdersBadge();
+
+            const message = `🆕 НОВЫЙ ЗАКАЗ!\n\n` +
+                `📌 Стиль: ${style}\n` +
+                `🎯 Персонаж/Ворк: ${character}\n` +
+                `📱 Telegram: ${telegram}\n` +
+                `💬 Комментарий: ${comment || '—'}`;
+
+            const tgLink = `https://t.me/fuckapollo?text=${encodeURIComponent(message)}`;
+            window.open(tgLink, '_blank');
+
+            alert('✅ Заказ отправлен! Я свяжусь с тобой в Telegram.');
+
+            formSubmitted = true;
+            submitBtn.disabled = false;
+            submitBtn.textContent = '⚔ Отправить заказ';
+            generateCaptcha();
+            this.reset();
+
+            setTimeout(() => {
+                formSubmitted = false;
+            }, 30000);
+        });
+
+        // ===== ПРОКРУТКА =====
+        document.querySelectorAll('.scroll-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.getElementById('order');
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+        });
+
+        // ===== АНИМАЦИЯ ПОЯВЛЕНИЯ =====
+        const animElements = document.querySelectorAll('.animate-on-scroll');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.15 });
+
+        animElements.forEach(el => observer.observe(el));
+
+        // ===== ОБНОВЛЕНИЕ БЭЙДЖА =====
+        updateOrdersBadge();
+
+        // ===== ЗАКРЫТИЕ ПАНЕЛИ ПО ESC =====
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const panel = document.getElementById('ordersPanel');
+                if (panel && panel.classList.contains('active')) {
+                    toggleOrders();
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
