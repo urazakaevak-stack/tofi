@@ -132,6 +132,7 @@
             transition: all 0.3s;
             text-decoration: none;
             font-family: 'Rajdhani', sans-serif;
+            width: 100%;
         }
 
         .pay-btn:hover {
@@ -216,7 +217,7 @@
         <h1 class="payment-title">Оплата заказа</h1>
         <p class="payment-sub">Выберите способ оплаты</p>
 
-        <!-- Сводка заказа (заполняется из URL) -->
+        <!-- Сводка заказа -->
         <div class="order-summary" id="orderSummary">
             <div class="row">
                 <span class="label">Услуга</span>
@@ -255,7 +256,7 @@
                 <span class="btn-price" id="starsPrice">—</span>
             </button>
 
-            <!-- СБП / Карта (через родителя) -->
+            <!-- СБП / Карта -->
             <button class="pay-btn" onclick="payWithSBP()">
                 <i class="fas fa-mobile-alt"></i>
                 <span class="btn-label">СБП / Карта</span>
@@ -263,7 +264,7 @@
             </button>
         </div>
 
-        <!-- Статус сообщение -->
+        <!-- Статус -->
         <div class="status-message" id="statusMessage"></div>
 
         <!-- Назад -->
@@ -272,28 +273,20 @@
 
     <script>
         // ============================================================
-        // ===== НАСТРОЙКИ (ЗАМЕНИТЕ НА СВОИ) =====
+        // ===== НАСТРОЙКИ (ЗАМЕНИ НА СВОИ) =====
         // ============================================================
+        
+        // ТВОЙ TELEGRAM (куда писать после оплаты)
+        const YOUR_TELEGRAM = "fuckapollo"; // ← ЗАМЕНИ, ЕСЛИ НУЖНО
 
-        // ==== НАСТРОЙКА CRYPTOBOT ====
-        // 1. Откройте @CryptoBot → Crypto Pay → Создать приложение
-        // 2. Скопируйте API-токен и вставьте сюда:
-        const CRYPTOBOT_TOKEN = "613725:AAYSe1oeIyxCzg2cUm0wfnJaG29RaZERXhU";
-
-        // ==== ТВОЙ TELEGRAM (куда приходят уведомления) ====
-        const YOUR_TELEGRAM = "fuckapollo"; // твой юзернейм
-
-
-        // ============================================================
         // ===== ЗАГРУЗКА ДАННЫХ ИЗ URL =====
-        // ============================================================
-
         function getParam(name) {
             const url = new URL(window.location.href);
             return url.searchParams.get(name) || '';
         }
 
-        const service = getParam('service') || 'Flow Edit';
+        // Читаем название услуги и цену из URL
+        const service = decodeURIComponent(getParam('service')) || 'Flow Edit';
         const price = parseInt(getParam('price')) || 150;
 
         // Отображаем данные
@@ -305,62 +298,43 @@
         document.getElementById('starsPrice').textContent = price + ' ⭐';
         document.getElementById('sbpPrice').textContent = price + ' ₽';
 
-
-        // ============================================================
         // ===== ФУНКЦИИ ОПЛАТЫ =====
-        // ============================================================
 
-        // ---- 1. CryptoBot (USDT / TON) ----
+        // 1. CryptoBot (USDT / TON)
         function payWithCrypto(asset) {
             showStatus('⏳ Создаём счёт в CryptoBot...', '');
-
-            // Определяем сумму в USDT (курс примерный)
-            const amountInUSD = (price / 90).toFixed(2); // 90 ₽ за 1 USDT (примерно)
-
-            // Создаём ссылку на оплату через CryptoBot
-            const description = `${service} — Apollo Hub`;
-
-            // Вариант 1: Через прямую ссылку (работает с @CryptoBot)
-            const botUrl = `https://t.me/CryptoBot?start=pay_${CRYPTOBOT_TOKEN}_${amountInUSD}_${asset}_${encodeURIComponent(description)}`;
-
-            // Вариант 2: Через веб-ссылку (если бот не открывается)
-            const webUrl = `https://pay.crypt.bot/api/createInvoice?token=${CRYPTOBOT_TOKEN}&amount=${amountInUSD}&asset=${asset}&description=${encodeURIComponent(description)}`;
-
-            // Открываем CryptoBot для оплаты
-            window.open(botUrl, '_blank');
-
+            
+            // Открываем чат с тобой для оплаты
+            window.open(`https://t.me/${fuckapollo}`, '_blank');
+            
             showStatus(
-                '✅ Счёт создан! Оплатите в открывшемся окне CryptoBot.',
+                '✅ Перейдите в чат с продавцом!',
                 'success',
-                `После оплаты напишите @${YOUR_TELEGRAM} с подтверждением.`
+                `Напишите @${fuckapollo} и оплатите ${price} ₽ в ${asset}.`
             );
         }
 
-        // ---- 2. Telegram Stars ----
+        // 2. Telegram Stars
         function payWithStars() {
+            window.open(`https://t.me/${fuckapollo}`, '_blank');
             showStatus(
                 '🌟 Оплата Telegram Stars',
-                '',
-                `Отправьте ${price} ⭐ на @${YOUR_TELEGRAM} и напишите нам.`
+                'success',
+                `Отправьте ${price} ⭐ на @${fuckapollo} и напишите нам.`
             );
-            // Открываем чат
-            window.open(`https://t.me/${YOUR_TELEGRAM}`, '_blank');
         }
 
-        // ---- 3. СБП / Карта (через родителя) ----
+        // 3. СБП / Карта
         function payWithSBP() {
+            window.open(`https://t.me/${fuckapollo}`, '_blank');
             showStatus(
                 '💳 Оплата по СБП / карте',
-                '',
-                `Переведите ${price} ₽ по номеру телефона родителя (напишите @${YOUR_TELEGRAM} для получения реквизитов).`
+                'success',
+                `Переведите ${price} ₽ по номеру карты (напишите @${fuckapollo} для получения реквизитов).`
             );
-            window.open(`https://t.me/${YOUR_TELEGRAM}`, '_blank');
         }
 
-
-        // ============================================================
         // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
-        // ============================================================
 
         function showStatus(title, type, extra) {
             const el = document.getElementById('statusMessage');
@@ -370,11 +344,6 @@
             if (extra) html += `<br><span style="font-size:0.85rem;color:rgba(255,255,255,0.5);">${extra}</span>`;
             el.innerHTML = html;
             el.style.display = 'block';
-        }
-
-        // Если нужно скрыть статус
-        function hideStatus() {
-            document.getElementById('statusMessage').style.display = 'none';
         }
     </script>
 
