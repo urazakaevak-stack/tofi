@@ -280,7 +280,7 @@
             z-index: 1;
         }
 
-        /* ===== КНОПКИ (две: "В корзину" и "Оплатить") ===== */
+        /* ===== КНОПКИ ===== */
         .btn-group {
             display: flex;
             gap: 10px;
@@ -842,7 +842,6 @@
             const grid = document.getElementById('productsGrid');
             grid.innerHTML = products.map(p => {
                 const inCart = cart.find(c => c.id === p.id);
-                // Кодируем название для URL
                 const serviceEncoded = encodeURIComponent(p.name);
                 return `
                     <div class="product-card">
