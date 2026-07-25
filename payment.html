@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Оплата — Apollo Hub</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet" />
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: #0a0010;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .payment-container {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(20, 0, 30, 0.8);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 25px;
+            padding: 40px 30px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .payment-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(124, 58, 237, 0.03), transparent, rgba(59, 130, 246, 0.03), transparent);
+            animation: spin 20s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        .payment-container > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .payment-icon {
+            font-size: 4rem;
+            color: #7c3aed;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .payment-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .payment-sub {
+            color: rgba(255,255,255,0.3);
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 25px;
+        }
+
+        .order-summary {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: left;
+            border: 1px solid rgba(124, 58, 237, 0.05);
+        }
+
+        .order-summary .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .order-summary .row:last-child {
+            border-bottom: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #7c3aed;
+        }
+
+        .order-summary .label {
+            color: rgba(255,255,255,0.4);
+        }
+
+        .order-summary .value {
+            color: #fff;
+        }
+
+        .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .pay-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 14px 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(124, 58, 237, 0.15);
+            background: rgba(124, 58, 237, 0.05);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        .pay-btn:hover {
+            background: rgba(124, 58, 237, 0.15);
+            border-color: #7c3aed;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.1);
+        }
+
+        .pay-btn i {
+            font-size: 1.5rem;
+            color: #7c3aed;
+        }
+
+        .pay-btn .btn-label {
+            flex: 1;
+            text-align: left;
+        }
+
+        .pay-btn .btn-price {
+            color: #7c3aed;
+            font-weight: 700;
+        }
+
+        .crypto-btn {
+            background: rgba(124, 58, 237, 0.08);
+            border-color: rgba(124, 58, 237, 0.2);
+        }
+
+        .crypto-btn:hover {
+            background: rgba(124, 58, 237, 0.2);
+            border-color: #7c3aed;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: rgba(255,255,255,0.2);
+            text-decoration: none;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: #7c3aed;
+        }
+
+        .status-message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 10px;
+            display: none;
+            font-size: 0.95rem;
+        }
+
+        .status-message.success {
+            display: block;
+            background: rgba(0, 200, 100, 0.1);
+            border: 1px solid rgba(0, 200, 100, 0.2);
+            color: #00c864;
+        }
+
+        .status-message.error {
+            display: block;
+            background: rgba(255, 50, 50, 0.1);
+            border: 1px solid rgba(255, 50, 50, 0.2);
+            color: #ff4444;
+        }
+
+        @media (max-width: 480px) {
+            .payment-container { padding: 25px 18px; }
+            .payment-title { font-size: 1.4rem; }
+            .pay-btn { padding: 12px 15px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="payment-container">
+        <span class="payment-icon">💎</span>
+        <h1 class="payment-title">Оплата заказа</h1>
+        <p class="payment-sub">Выберите способ оплаты</p>
+
+        <!-- Сводка заказа (заполняется из URL) -->
+        <div class="order-summary" id="orderSummary">
+            <div class="row">
+                <span class="label">Услуга</span>
+                <span class="value" id="serviceName">—</span>
+            </div>
+            <div class="row">
+                <span class="label">Сумма</span>
+                <span class="value" id="servicePrice">—</span>
+            </div>
+            <div class="row" style="border-bottom: none; font-size: 1.1rem; color: #7c3aed;">
+                <span class="label">Итого к оплате</span>
+                <span class="value" id="totalPrice">—</span>
+            </div>
+        </div>
+
+        <!-- Способы оплаты -->
+        <div class="payment-methods">
+            <!-- CryptoBot (USDT) -->
+            <button class="pay-btn crypto-btn" onclick="payWithCrypto('USDT')">
+                <i class="fab fa-bitcoin"></i>
+                <span class="btn-label">CryptoBot (USDT)</span>
+                <span class="btn-price" id="cryptoPrice">—</span>
+            </button>
+
+            <!-- CryptoBot (TON) -->
+            <button class="pay-btn crypto-btn" onclick="payWithCrypto('TON')">
+                <i class="fab fa-telegram-plane"></i>
+                <span class="btn-label">CryptoBot (TON)</span>
+                <span class="btn-price" id="cryptoPriceTon">—</span>
+            </button>
+
+            <!-- Telegram Stars -->
+            <button class="pay-btn" onclick="payWithStars()">
+                <i class="fas fa-star" style="color: #ffd700;"></i>
+                <span class="btn-label">Telegram Stars</span>
+                <span class="btn-price" id="starsPrice">—</span>
+            </button>
+
+            <!-- СБП / Карта (через родителя) -->
+            <button class="pay-btn" onclick="payWithSBP()">
+                <i class="fas fa-mobile-alt"></i>
+                <span class="btn-label">СБП / Карта</span>
+                <span class="btn-price" id="sbpPrice">—</span>
+            </button>
+        </div>
+
+        <!-- Статус сообщение -->
+        <div class="status-message" id="statusMessage"></div>
+
+        <!-- Назад -->
+        <a href="shop.html" class="back-link">← Вернуться в магазин</a>
+    </div>
+
+    <script>
+        // ============================================================
+        // ===== НАСТРОЙКИ (ЗАМЕНИТЕ НА СВОИ) =====
+        // ============================================================
+
+        // ==== НАСТРОЙКА CRYPTOBOT ====
+        // 1. Откройте @CryptoBot → Crypto Pay → Создать приложение
+        // 2. Скопируйте API-токен и вставьте сюда:
+        const CRYPTOBOT_TOKEN = "613725:AAYSe1oeIyxCzg2cUm0wfnJaG29RaZERXhU";
+
+        // ==== ТВОЙ TELEGRAM (куда приходят уведомления) ====
+        const YOUR_TELEGRAM = "fuckapollo"; // твой юзернейм
+
+
+        // ============================================================
+        // ===== ЗАГРУЗКА ДАННЫХ ИЗ URL =====
+        // ============================================================
+
+        function getParam(name) {
+            const url = new URL(window.location.href);
+            return url.searchParams.get(name) || '';
+        }
+
+        const service = getParam('service') || 'Flow Edit';
+        const price = parseInt(getParam('price')) || 150;
+
+        // Отображаем данные
+        document.getElementById('serviceName').textContent = service;
+        document.getElementById('servicePrice').textContent = price + ' ₽';
+        document.getElementById('totalPrice').textContent = price + ' ₽';
+        document.getElementById('cryptoPrice').textContent = '~' + price + ' ₽';
+        document.getElementById('cryptoPriceTon').textContent = '~' + price + ' ₽';
+        document.getElementById('starsPrice').textContent = price + ' ⭐';
+        document.getElementById('sbpPrice').textContent = price + ' ₽';
+
+
+        // ============================================================
+        // ===== ФУНКЦИИ ОПЛАТЫ =====
+        // ============================================================
+
+        // ---- 1. CryptoBot (USDT / TON) ----
+        function payWithCrypto(asset) {
+            showStatus('⏳ Создаём счёт в CryptoBot...', '');
+
+            // Определяем сумму в USDT (курс примерный)
+            const amountInUSD = (price / 90).toFixed(2); // 90 ₽ за 1 USDT (примерно)
+
+            // Создаём ссылку на оплату через CryptoBot
+            const description = `${service} — Apollo Hub`;
+
+            // Вариант 1: Через прямую ссылку (работает с @CryptoBot)
+            const botUrl = `https://t.me/CryptoBot?start=pay_${CRYPTOBOT_TOKEN}_${amountInUSD}_${asset}_${encodeURIComponent(description)}`;
+
+            // Вариант 2: Через веб-ссылку (если бот не открывается)
+            const webUrl = `https://pay.crypt.bot/api/createInvoice?token=${CRYPTOBOT_TOKEN}&amount=${amountInUSD}&asset=${asset}&description=${encodeURIComponent(description)}`;
+
+            // Открываем CryptoBot для оплаты
+            window.open(botUrl, '_blank');
+
+            showStatus(
+                '✅ Счёт создан! Оплатите в открывшемся окне CryptoBot.',
+                'success',
+                `После оплаты напишите @${YOUR_TELEGRAM} с подтверждением.`
+            );
+        }
+
+        // ---- 2. Telegram Stars ----
+        function payWithStars() {
+            showStatus(
+                '🌟 Оплата Telegram Stars',
+                '',
+                `Отправьте ${price} ⭐ на @${YOUR_TELEGRAM} и напишите нам.`
+            );
+            // Открываем чат
+            window.open(`https://t.me/${YOUR_TELEGRAM}`, '_blank');
+        }
+
+        // ---- 3. СБП / Карта (через родителя) ----
+        function payWithSBP() {
+            showStatus(
+                '💳 Оплата по СБП / карте',
+                '',
+                `Переведите ${price} ₽ по номеру телефона родителя (напишите @${YOUR_TELEGRAM} для получения реквизитов).`
+            );
+            window.open(`https://t.me/${YOUR_TELEGRAM}`, '_blank');
+        }
+
+
+        // ============================================================
+        // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+        // ============================================================
+
+        function showStatus(title, type, extra) {
+            const el = document.getElementById('statusMessage');
+            el.className = 'status-message';
+            if (type) el.classList.add(type);
+            let html = `<strong>${title}</strong>`;
+            if (extra) html += `<br><span style="font-size:0.85rem;color:rgba(255,255,255,0.5);">${extra}</span>`;
+            el.innerHTML = html;
+            el.style.display = 'block';
+        }
+
+        // Если нужно скрыть статус
+        function hideStatus() {
+            document.getElementById('statusMessage').style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>
