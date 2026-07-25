@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet" />
     
     <style>
-        /* ===== ГЛОБАЛЬНЫЕ СТИЛИ ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
         body {
@@ -110,7 +109,7 @@
 
         /* ===== ГЛАВНЫЙ ЭКРАН ===== */
         .hero {
-            min-height: 40vh;
+            min-height: 35vh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -281,33 +280,78 @@
             z-index: 1;
         }
 
-        .add-btn {
+        /* ===== КНОПКИ (две: "В корзину" и "Оплатить") ===== */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-group .add-btn {
+            flex: 1;
+            min-width: 100px;
             background: linear-gradient(135deg, #7c3aed, #3b82f6);
             border: none;
             border-radius: 50px;
-            padding: 12px 30px;
+            padding: 12px 20px;
             color: #fff;
             cursor: pointer;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 700;
             transition: all 0.3s;
-            width: 100%;
-            position: relative;
-            z-index: 1;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            text-align: center;
+            text-decoration: none;
         }
-        .add-btn:hover {
+
+        .btn-group .add-btn:hover {
             transform: scale(1.03);
             box-shadow: 0 0 30px rgba(124, 58, 237, 0.3);
         }
-        .add-btn.in-cart {
+
+        .btn-group .add-btn.in-cart {
             background: rgba(124, 58, 237, 0.2);
             border: 1px solid #7c3aed;
             color: #7c3aed;
         }
 
-        /* ===== КОРЗИНА (модалка) ===== */
+        .btn-group .pay-btn {
+            flex: 1;
+            min-width: 100px;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 50px;
+            padding: 12px 20px;
+            color: #ffd700;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 700;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-group .pay-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.15);
+            background: rgba(255, 215, 0, 0.15);
+            border-color: #ffd700;
+        }
+
+        .btn-group .pay-btn i {
+            font-size: 1rem;
+        }
+
+        /* ===== КОРЗИНА ===== */
         .cart-modal {
             display: none;
             position: fixed;
@@ -545,7 +589,6 @@
             z-index: 2;
         }
 
-        /* ===== ССЫЛКА НА ПРОФИЛЬ ===== */
         .profile-link {
             display: inline-block;
             padding: 12px 35px;
@@ -573,7 +616,6 @@
             color: #7c3aed;
         }
 
-        /* ===== АДАПТИВ ===== */
         @media (max-width: 768px) {
             nav { padding: 15px 20px; flex-direction: column; gap: 10px; }
             .logo { font-size: 1.3rem; }
@@ -590,6 +632,7 @@
             .payments-grid { gap: 12px; }
             .pay-item { padding: 8px 12px; min-width: 50px; }
             .pay-item i { font-size: 1.3rem; }
+            .btn-group .add-btn, .btn-group .pay-btn { font-size: 0.75rem; padding: 10px 12px; min-width: 70px; }
         }
 
         @media (max-width: 480px) {
@@ -597,6 +640,8 @@
             .products-grid { grid-template-columns: 1fr; }
             .product-card .icon { font-size: 2.8rem; }
             .profile-link { padding: 10px 20px; font-size: 0.85rem; }
+            .btn-group { flex-direction: column; }
+            .btn-group .add-btn, .btn-group .pay-btn { width: 100%; }
         }
     </style>
 </head>
@@ -703,7 +748,6 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // Частицы
         const particles = [];
         for (let i = 0; i < 60; i++) {
             particles.push({
@@ -719,7 +763,6 @@
         function drawScene() {
             ctx.clearRect(0, 0, W, H);
 
-            // Фон
             const grad = ctx.createRadialGradient(W * 0.3, H * 0.3, 0, W * 0.3, H * 0.3, Math.max(W, H) * 0.7);
             grad.addColorStop(0, '#1a0a2e');
             grad.addColorStop(0.5, '#0a0010');
@@ -727,7 +770,6 @@
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, W, H);
 
-            // Частицы
             particles.forEach(p => {
                 p.x += p.dx;
                 p.y += p.dy;
@@ -742,7 +784,6 @@
                 ctx.fill();
             });
 
-            // Соединения
             for (let i = 0; i < particles.length; i++) {
                 for (let j = i + 1; j < particles.length; j++) {
                     const dx = particles[i].x - particles[j].x;
@@ -765,40 +806,64 @@
         drawScene();
 
         // ============================================================
-        // ===== МАГАЗИН (JS) =====
+        // ===== МАГАЗИН =====
         // ============================================================
 
-        // Товары
         const products = [
-            { id: 1, name: "FLOW EDIT", price: 150, icon: "🌊", tag: "Плавность & Лёгкость" },
-            { id: 2, name: "KM EDIT", price: 100, icon: "🎬", tag: "Кинематограф" },
-            { id: 3, name: "ANIME EDIT", price: 75, icon: "🌸", tag: "Аниме-эстетика" }
+            { 
+                id: 1, 
+                name: "FLOW EDIT", 
+                price: 150, 
+                icon: "🌊", 
+                tag: "Плавность & Лёгкость",
+                desc: "Плавный, текучий стиль с мягкими переходами"
+            },
+            { 
+                id: 2, 
+                name: "KM EDIT", 
+                price: 100, 
+                icon: "🎬", 
+                tag: "Кинематограф",
+                desc: "Кинематографичный стиль с глубоким цветокором"
+            },
+            { 
+                id: 3, 
+                name: "ANIME EDIT", 
+                price: 75, 
+                icon: "🌸", 
+                tag: "Аниме-эстетика",
+                desc: "Яркие цвета и динамичный монтаж"
+            }
         ];
 
-        // Корзина
         let cart = JSON.parse(localStorage.getItem('apolloCart')) || [];
 
-        // Отрисовка товаров
         function renderProducts() {
             const grid = document.getElementById('productsGrid');
             grid.innerHTML = products.map(p => {
                 const inCart = cart.find(c => c.id === p.id);
+                // Кодируем название для URL
+                const serviceEncoded = encodeURIComponent(p.name);
                 return `
                     <div class="product-card">
                         <span class="icon">${p.icon}</span>
                         <h3>${p.name}</h3>
                         <span class="tag">✦ ${p.tag}</span>
                         <div class="price">${p.price} <span>₽</span></div>
-                        <div class="desc">Качество в каждом кадре</div>
-                        <button class="add-btn ${inCart ? 'in-cart' : ''}" onclick="addToCart(${p.id})">
-                            ${inCart ? '✅ В корзине' : '⚔ Заказать'}
-                        </button>
+                        <div class="desc">${p.desc}</div>
+                        <div class="btn-group">
+                            <button class="add-btn ${inCart ? 'in-cart' : ''}" onclick="addToCart(${p.id})">
+                                ${inCart ? '✅ В корзине' : '🛒 В корзину'}
+                            </button>
+                            <a href="payment.html?service=${serviceEncoded}&price=${p.price}" class="pay-btn">
+                                <i class="fas fa-credit-card"></i> Оплатить
+                            </a>
+                        </div>
                     </div>
                 `;
             }).join('');
         }
 
-        // Добавление в корзину
         function addToCart(id) {
             const product = products.find(p => p.id === id);
             if (!product) return;
@@ -815,7 +880,6 @@
             updateCartUI();
         }
 
-        // Обновление UI корзины
         function updateCartUI() {
             const count = document.getElementById('cartCount');
             count.textContent = cart.reduce((sum, i) => sum + i.quantity, 0);
@@ -837,7 +901,6 @@
             document.getElementById('cartTotal').textContent = total + ' ₽';
         }
 
-        // Удаление из корзины
         function removeFromCart(id) {
             cart = cart.filter(c => c.id !== id);
             localStorage.setItem('apolloCart', JSON.stringify(cart));
@@ -845,14 +908,12 @@
             updateCartUI();
         }
 
-        // Открыть/закрыть корзину
         function toggleCart() {
             const modal = document.getElementById('cartModal');
             modal.classList.toggle('active');
             updateCartUI();
         }
 
-        // Показать форму оформления
         function showCheckout() {
             if (cart.length === 0) {
                 alert('Корзина пуста! Добавьте услуги.');
@@ -861,7 +922,6 @@
             document.getElementById('checkoutForm').classList.toggle('active');
         }
 
-        // Отправка заказа
         function submitOrder() {
             const name = document.getElementById('userName').value.trim();
             const contact = document.getElementById('userContact').value.trim();
@@ -897,7 +957,6 @@
             toggleCart();
         }
 
-        // ===== ИНИЦИАЛИЗАЦИЯ =====
         renderProducts();
         updateCartUI();
     </script>
